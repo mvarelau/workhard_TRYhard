@@ -224,4 +224,201 @@ if __name__ == "__main__":
     except ValueError as e:
         print(e)
 ```
+# Pckage shape with exceptions 
+## Point
+```python
+class Point:
+    def __init__(self, given_x: float = 0, given_y: float = 0):
+        # Check if initial values are numeric (either int or float)
+        if not isinstance(given_x, (int, float)) or not isinstance(given_y, (int, float)):
+            # Raise an error if the coordinates are not numbers
+            raise ValueError("Coordinates must be numbers.")
+        # Assign the valid numeric values to the instance variables
+        self.x = given_x
+        self.y = given_y
 
+    def move(self, new_x: float, new_y: float):
+        # Check if the new coordinates are numeric (either int or float)
+        if not isinstance(new_x, (int, float)) or not isinstance(new_y, (int, float)):
+            # Raise an error if the new coordinates are not numbers
+            raise ValueError("New coordinates must be numbers.")
+        # Update the point's position with the valid new coordinates
+        self.x = new_x
+        self.y = new_y
+
+    def reset(self):
+        # Reset the point's coordinates to the origin (0, 0)
+        self.x = 0
+        self.y = 0
+```
+## Line
+```python
+from punto import Point
+
+class Line:
+    def __init__(self, start: Point, end: Point):
+        try:
+            # Check if the start and end points are instances of the Point class
+            if not isinstance(start, Point) or not isinstance(end, Point):
+                # Raise an error if the inputs are not valid Point instances
+                raise TypeError("Start and end points must be instances of the Point class.")
+            # Assign the valid points to the instance variables
+            self.start = start
+            self.end = end
+        except TypeError as e:
+            # Handle the error by printing a message and assigning default points
+            print(f"Error in __init__: {e}")
+            self.start = Point()  # Assign default points if an error occurs
+            self.end = Point()
+
+    def compute_length(self) -> float:
+        try:
+            # Calculate the length of the line segment using the distance formula
+            length = (((self.end.x - self.start.x) ** 2) + ((self.end.y - self.start.y) ** 2)) ** 0.5
+            return length
+        except Exception as e:
+            # Handle any unexpected errors during the length calculation
+            print(f"Error in compute_length: {e}")
+            return 0.0  # Return 0.0 as a fallback value if an error occurs
+
+    def compute_slope(self) -> float:
+        try:
+            # Check if the x-coordinates are the same, which would result in an undefined slope
+            if self.end.x == self.start.x:
+                raise ZeroDivisionError("The slope is undefined (division by zero).")
+            # Calculate the slope of the line
+            slope = (self.end.y - self.start.y) / (self.end.x - self.start.x)
+            return slope
+        except ZeroDivisionError as e:
+            # Handle the case where the slope is undefined (vertical line)
+            print(f"Error in compute_slope: {e}")
+            return float('inf')  # Return infinity to indicate an undefined slope
+        except Exception as e:
+            # Handle any other unexpected errors during the slope calculation
+            print(f"Error in compute_slope: {e}")
+            return None  # Return None as a fallback value for unexpected errors
+```
+## Rectangle 
+```python
+from punto import Point
+from linea import Line
+
+class Rectangle:
+    def __init__(self, method: int, *args):
+        try:
+            if method == 1:
+                # Method 1: Construct a rectangle from the bottom-left point, width, and height
+                bottom_left = args[0]
+                width = args[1]
+                height = args[2]
+                
+                # Validate the types of the arguments
+                if not isinstance(bottom_left, Point) or not isinstance(width, (int, float)) or not isinstance(height, (int, float)):
+                    raise ValueError("Invalid arguments for method 1.")
+                
+                # Calculate the center based on the bottom-left corner, width, and height
+                self.center = Point(
+                    given_x=bottom_left.x + width / 2,
+                    given_y=bottom_left.y + height / 2
+                )
+                self.width = width
+                self.height = height
+
+            elif method == 2:
+                # Method 2: Construct a rectangle from the center point, width, and height
+                center = args[0]
+                width = args[1]
+                height = args[2]
+                
+                # Validate the types of the arguments
+                if not isinstance(center, Point) or not isinstance(width, (int, float)) or not isinstance(height, (int, float)):
+                    raise ValueError("Invalid arguments for method 2.")
+                
+                # Assign values directly
+                self.center = center
+                self.width = width
+                self.height = height
+
+            elif method == 3:
+                # Method 3: Construct a rectangle from two diagonal points
+                point1 = args[0]
+                point2 = args[1]
+                
+                # Validate that both arguments are Point instances
+                if not isinstance(point1, Point) or not isinstance(point2, Point):
+                    raise ValueError("Invalid arguments for method 3.")
+                
+                # Calculate the center, width, and height based on the diagonal points
+                self.center = Point(
+                    given_x=(point1.x + point2.x) / 2,
+                    given_y=(point1.y + point2.y) / 2
+                )
+                self.width = abs(point2.x - point1.x)
+                self.height = abs(point2.y - point1.y)
+
+            elif method == 4:
+                # Method 4: Construct a rectangle from two opposite sides (lines)
+                line1 = args[0]
+                line3 = args[2]
+                
+                # Validate that both arguments are Line instances
+                if not isinstance(line1, Line) or not isinstance(line3, Line):
+                    raise ValueError("Invalid arguments for method 4.")
+                
+                # Calculate the center based on the start of line1 and the end of line3
+                self.center = Point(
+                    given_x=(line1.start.x + line3.end.x) / 2,
+                    given_y=(line1.start.y + line3.end.y) / 2
+                )
+                self.width = line1.compute_length()
+                self.height = line3.compute_length()
+
+            else:
+                # Raise an error if the method value is invalid
+                raise ValueError("Invalid method.")
+
+        except (IndexError, ValueError) as e:
+            # Handle exceptions for missing or invalid arguments
+            print(f"Error in __init__: {e}")
+            # Set default values in case of an error
+            self.center = Point()
+            self.width = 0
+            self.height = 0
+
+    def compute_area(self) -> float:
+        try:
+            # Calculate the area of the rectangle
+            return self.width * self.height
+        except Exception as e:
+            # Handle any unexpected error during the calculation
+            print(f"Error in compute_area: {e}")
+            return 0.0  # Return 0 as a safe fallback value
+
+    def compute_perimeter(self) -> float:
+        try:
+            # Calculate the perimeter of the rectangle
+            return 2 * (self.width + self.height)
+        except Exception as e:
+            # Handle any unexpected error during the calculation
+            print(f"Error in compute_perimeter: {e}")
+            return 0.0  # Return 0 as a safe fallback value
+
+    def compute_interference_point(self, point: Point) -> bool:
+        try:
+            # Validate that the input is a Point instance
+            if not isinstance(point, Point):
+                raise ValueError("Argument must be an instance of Point.")
+            
+            # Calculate the boundaries of the rectangle
+            left_x = self.center.x - self.width / 2
+            right_x = self.center.x + self.width / 2
+            bottom_y = self.center.y - self.height / 2
+            top_y = self.center.y + self.height / 2
+            
+            # Check if the point lies within the rectangle
+            return left_x <= point.x <= right_x and bottom_y <= point.y <= top_y
+        except ValueError as e:
+            # Handle invalid argument errors
+            print(f"Error in compute_interference_point: {e}")
+            return False  # Return False as a safe fallback
+```
